@@ -1,2 +1,4 @@
 16-septiembre : Pensamos en hacer un tipo de pacman pero usando las simulaciones para el comportamiento de pacman y de los fantamas
 19-septiembre : Pensamos en integrar las mecanicas de aceleracion e inercia para el movimiento del jugador
+24-septiembre: para el movimiento del pacman le asignamos la aceleracion 
+29-septiembre: para las paredes pensamos en implementar un resorte para que el jugador tenga que moverse mas adecuadamente en vez de chocarse
