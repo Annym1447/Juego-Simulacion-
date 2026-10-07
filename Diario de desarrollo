@@ -2,3 +2,4 @@
 19-septiembre : Pensamos en integrar las mecanicas de aceleracion e inercia para el movimiento del jugador
 24-septiembre: para el movimiento del pacman le asignamos la aceleracion 
 29-septiembre: para las paredes pensamos en implementar un resorte para que el jugador tenga que moverse mas adecuadamente en vez de chocarse
+7-octubre: implementamos las primers versiones para cada cosa tanto como para el jugador y para la paredes (faltan enemigos) y el jugador atravieza la pared
