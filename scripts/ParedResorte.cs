@@ -1,38 +1,49 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using System;
 
-public class ParedResorte : MonoBehaviour
+public class ParedResorteTilemap : MonoBehaviour
 {
     public ControladorPacman pacman;
-    public float k = 80.0f;   // Constante de rigidez (resorte)
-    public float b = 4.0f;    // Amortiguamiento
-    SpriteRenderer sprite;
-
-    void Start()
-    {
-        sprite = GetComponent<SpriteRenderer>();
-    }
+    public Tilemap tilemap;          // Arrastra aquí el Tilemap de las paredes
+    public float k = 80.0f;          // Constante de rigidez
+    public float b = 4.0f;           // Amortiguamiento
 
     void Update()
     {
-        if (pacman == null) return;
+        if (pacman == null || tilemap == null) return;
 
         Vector2 posicion = pacman.ParticulaV1.transform.position;
-        AplicarResorte(posicion, ref pacman.v1, pacman.m1, pacman.radio);
+        float radio = pacman.radio;
+
+        // Tamaño real de una celda en el mundo
+        Vector3 tam = Vector3.Scale(tilemap.cellSize, tilemap.transform.lossyScale);
+
+        // Celda donde está Pac-Man y cuántas celdas alrededor revisar
+        Vector3Int centro = tilemap.WorldToCell(posicion);
+        int rx = Mathf.CeilToInt(radio / Mathf.Abs(tam.x)) + 1;
+        int ry = Mathf.CeilToInt(radio / Mathf.Abs(tam.y)) + 1;
+
+        for (int x = -rx; x <= rx; x++)
+        {
+            for (int y = -ry; y <= ry; y++)
+            {
+                Vector3Int celda = new Vector3Int(centro.x + x, centro.y + y, 0);
+                if (!tilemap.HasTile(celda)) continue;
+
+                // Rectángulo de esta celda (equivale al "sprite.bounds" de una pared)
+                Vector3 c = tilemap.GetCellCenterWorld(celda);
+                Bounds limites = new Bounds(c, new Vector3(Mathf.Abs(tam.x), Mathf.Abs(tam.y), 1f));
+
+                AplicarResorte(posicion, limites, ref pacman.v1, pacman.m1, radio);
+            }
+        }
     }
 
-    void AplicarResorte(Vector2 posicion, ref Vector2 velocidad, float masa, float radio)
+    void AplicarResorte(Vector2 posicion, Bounds limites, ref Vector2 velocidad, float masa, float radio)
     {
-        // Rectángulo de la pared (según el tamaño del sprite en la escena)
-        Bounds limites = sprite.bounds;
-        float minX = limites.min.x;
-        float maxX = limites.max.x;
-        float minY = limites.min.y;
-        float maxY = limites.max.y;
-
-        // Punto de la pared más cercano al centro de Pac-Man
-        float cercanoX = Mathf.Clamp(posicion.x, minX, maxX);
-        float cercanoY = Mathf.Clamp(posicion.y, minY, maxY);
+        float cercanoX = Mathf.Clamp(posicion.x, limites.min.x, limites.max.x);
+        float cercanoY = Mathf.Clamp(posicion.y, limites.min.y, limites.max.y);
 
         float dx = posicion.x - cercanoX;
         float dy = posicion.y - cercanoY;
@@ -40,7 +51,6 @@ public class ParedResorte : MonoBehaviour
 
         if (distancia < radio)
         {
-            // Dirección de empuje (normal de la pared hacia Pac-Man)
             float nx, ny;
             if (distancia > 0.0001f)
             {
@@ -49,7 +59,6 @@ public class ParedResorte : MonoBehaviour
             }
             else
             {
-                // El centro quedó dentro de la pared: empujar desde su centro
                 float cx = posicion.x - limites.center.x;
                 float cy = posicion.y - limites.center.y;
                 float mag = (float)Math.Sqrt(cx * cx + cy * cy);
@@ -57,20 +66,17 @@ public class ParedResorte : MonoBehaviour
                 else { nx = 0f; ny = 1f; }
             }
 
-            // Ley de Hooke: F = k * penetración
             float penetracion = radio - distancia;
             float fResorte = k * penetracion;
 
-            // Amortiguamiento solo en la dirección normal: F = -b * v_n
             float vn = velocidad.x * nx + velocidad.y * ny;
             float fAmort = -b * vn;
 
             float fx = (fResorte + fAmort) * nx;
             float fy = (fResorte + fAmort) * ny;
 
-            // a = F / m
-            velocidad.x = velocidad.x + (fx / masa) * Time.deltaTime;
-            velocidad.y = velocidad.y + (fy / masa) * Time.deltaTime;
+            velocidad.x += (fx / masa) * Time.deltaTime;
+            velocidad.y += (fy / masa) * Time.deltaTime;
         }
     }
 }
