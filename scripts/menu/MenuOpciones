@@ -1,0 +1,35 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class MenuOpciones : MonoBehaviour
+{
+    [SerializeField] private Slider sliderVolumen;
+    [SerializeField] private Toggle togglePantallaCompleta;
+
+    private void Start()
+    {
+        float volumen = PlayerPrefs.GetFloat("Volumen", 1f);
+        bool pantallaCompleta = PlayerPrefs.GetInt("PantallaCompleta", 1) == 1;
+
+        sliderVolumen.value = volumen;
+        togglePantallaCompleta.isOn = pantallaCompleta;
+
+        CambiarVolumen(volumen);
+        CambiarPantallaCompleta(pantallaCompleta);
+
+        sliderVolumen.onValueChanged.AddListener(CambiarVolumen);
+        togglePantallaCompleta.onValueChanged.AddListener(CambiarPantallaCompleta);
+    }
+
+    public void CambiarVolumen(float valor)
+    {
+        AudioListener.volume = valor;
+        PlayerPrefs.SetFloat("Volumen", valor);
+    }
+
+    public void CambiarPantallaCompleta(bool activado)
+    {
+        Screen.fullScreen = activado;
+        PlayerPrefs.SetInt("PantallaCompleta", activado ? 1 : 0);
+    }
+}
